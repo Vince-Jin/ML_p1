@@ -1,0 +1,154 @@
+---
+title: "Vincent_Jin_SML_Homework_01"
+author: "Vincent Jin"
+date: "2023-02-05"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Homework 01
+
+## Linear - ISL 5, 6, 9, 15
+
+### Question 5:
+Consider the fitted values that result from performing linear regression without an intercept. In this setting, the ith fitted value takes the form 
+$\hat{y}_{i} = x_{i}\hat{\beta}$, 
+where 
+$$\hat{\beta} = (\sum_{i=1}^{n}x_{i}y_{i}) / (\sum_{i'=1}^{n}x_{i'}^{2})$$. 
+Show that we can write 
+$$\hat{y'} = \sum_{i'=1}^{n}a_{i'} y_{i'}$$
+What is $a_{i'}$?
+
+***Answer:***
+$$ a_{i'} = \frac{ x_{i} x_{j} } { \sum_{k=1}^{n} x_{k}^{2} } $$
+
+
+### Question 6:
+Using (3.4), argue that in the case of simple linear regression, the least squares line always passes through the point ($\bar{x}$, $\bar{y}$).
+
+***Answer:***
+
+According to (3.4), $y_{i} = \hat{\beta}_{0} + \hat{\beta}_{1}x_{i}$ and $\beta_{0} = \bar{y} - \hat{\beta}_{1}\bar{x}$. When we substitute $x_{i}$ with $\bar{x}$, we can have:
+$y_{i} = \bar{y} - \beta_{1}\bar{x} +  \beta_{1}\bar{x}$. The last part of the equation canceled each other, so that $\hat{y}_{i}$ will be equal to $\bar{y}$, which means the least squares line will always pass through ($\bar{x}$, $\bar{y}$).
+
+### Question 9:
+This question involves the use of multiple linear regression on the Auto data set.
+(a) Produce a scatter plot matrix which includes all of the variables in the data set.
+``` {r package}
+#install.packages('ISLR')
+library(ISLR)
+library(tidyverse)
+```
+
+
+``` {r C3Q9.a}
+pairs(Auto)
+```
+
+(b) Compute the matrix of correlations between the variables using the function cor(). You will need to exclude the name variable, cor() which is qualitative.
+
+``` {r C3Q9.b}
+x <- Auto
+x %>% select(-(name)) %>%
+  cor()
+```
+
+(c) Use the lm() function to perform a multiple linear regression with mpg as the response and all other variables except name as the predictors. Use the summary() function to print the results.
+Comment on the output. For instance:
+``` {r C3Q9.c}
+x2 <- x %>%
+        select(-(name))
+reg <- lm(mpg ~ ., data = x2)
+summary(reg)
+```
+i. Is there a relationship between the predictors and the response?
+
+***Answer:***
+
+According to the results of from the summary command, we can see that the associated p-value was less than $2.2*10^{-16}$, which was less than 0.05, so that we can reject the null hypothesis        of no relationship between the predictors and the response thus conclude that there was a relationship between the predictors and the response variable.
+
+ii. Which predictors appear to have a statistically significant relationship to the response?
+
+***Answer:***
+
+Based on the regression results, we can see that predictors of: displacement, weight, year, origin were significantly associated with mpg while predictors of: cylinders, horsepower, acceleration were not.
+
+iii. What does the coefficient for the year variable suggest?
+
+***Answer:***
+
+The coefficient for the year variable represents that for every 1 increase in year there is a 0.750773 increase on mpg, adjusting for other variables.
+
+(d) Use the plot() function to produce diagnostic plots of the linear regression fit. Comment on any problems you see with the fit. Do the residual plots suggest any unusually large outliers? Does the leverage plot identify any observations with unusually high leverage?
+
+``` {r C3Q9.d}
+plot(reg)
+```
+
+***Answer***
+
+The residual vs. fitted value plot suggested that there seems to be a pattern which suggests non-linearity in the data. The residual plot also suggested object 323, 326, 327 were three unusal large outliers. The leverage plot also suggested that object 14 had an unusual high leverage.
+
+(e) Use the * and : symbols to fit linear regression models with interaction effects. Do any interactions appear to be statistically significant?
+
+``` {r C3Q9.e}
+reg2 <- lm(mpg ~ cylinders*displacement + displacement*horsepower + displacement*weight, data = x2)
+summary(reg2)
+```
+
+
+***Answer***
+
+Based on the results, the interaction between displacement and horsepower tened to be statistically significant, while the interaction between cylinders and displacement, and displacement and weight were not significant.
+
+(f) Try a few different transformations of the variables, such aslog(X), $\sqrt{x}$, $X^2$. Comment on your findings.
+
+***Answer***
+
+
+### Question 15
+This problem involves the Boston data set, which we saw in the lab for this chapter. We will now try to predict per capita crime rate using the other variables in this data set. In other words, per capita crime rate is the response, and the other variables are the predictors.
+
+``` {r C3Q15prep}
+#install.packages('MASS')
+library(MASS)
+library(tidyverse)
+boston <- Boston
+```
+
+(a) For each predictor, fit a simple linear regression model to predict the response. Describe your results. In which of the models is there a statistically significant association between the predictor and the response? Create some plots to back up your assertions.
+``` {r C3Q15.a}
+var_names <- boston %>% names()
+var_names <- var_names[2:14]
+allModelsList <- lapply(paste("crim ~", var_names), as.formula)
+allModelsResults <- lapply(allModelsList, function(x) lm(x, data= boston))
+for (n in 1:13) {
+  print(summary(allModelsResults[[n]]))
+}
+```
+
+***Answer:***
+
+By fitting the models, all predictors were significantly associated with response except for chas variable.
+
+(b) Fit a multiple regression model to predict the response using all of the predictors. Describe your results. For which predictors can we reject the null hypothesis H0 : βj = 0?
+
+``` {r C3Q15.b}
+func = "crim ~ zn"
+var_names2 = var_names[2:13]
+for (name in var_names2) {
+  func = paste(func, '+ ', name)
+}
+func = as.formula(func)
+reg3 <- lm(func, data = boston)
+summary(reg3)
+```
+***Answer***
+
+Based on the model results, for zn, dis, rad, black, medv we can reject the null hypothesis of $\beta_{j} = 0$
