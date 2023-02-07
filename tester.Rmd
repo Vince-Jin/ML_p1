@@ -152,3 +152,34 @@ summary(reg3)
 ***Answer***
 
 Based on the model results, for zn, dis, rad, black, medv we can reject the null hypothesis of $\beta_{j} = 0$
+
+(c) How do your results from (a) compare to your results from (b)? Create a plot displaying the univariate regression coefficients from (a) on the x-axis, and the multiple regression coefficients from (b) on the y-axis. That is, each  single point in the plot. Its coefficient in a simple linear regression model is shown on the x-axis, and its coefficient estimate in the multiple linear regression model is shown on the y-axis.
+
+***Answer Part 1***
+
+As compared to question (a), question (b) suggested that zn, dis, rad, black, medv which were significantly associated with response variable crim in (a) are now not significantly associated with crim in (b).
+
+***Plot***
+
+``` {r C3Q15.c.plot}
+uni <- vector("numeric", 0)
+for (n in 1:13) {
+  uni <- c(uni, allModelsResults[[n]]$coefficient[2])
+}
+mul <- vector("numeric", 0)
+mul <- c(mul, reg3$coefficients)
+mul <- mul[-1]
+plot(uni, mul)
+```
+
+(d) Is there evidence of non-linear association between any of the predictors and the response? To answer this question, for each predictor X, fit a model of the form
+$Y = \beta_{0} + \beta_{1} X + \beta_{2} X^{2} + \beta_{3} X^{3} + \epsilon$
+
+``` {r C3Q15.d}
+var_names3 <- var_names[-3]
+allModelsListPoly <- lapply(paste("crim ~", " ", "poly(", var_names3, ", 3)"), as.formula)
+allModelsPoly <- lapply(allModelsListPoly, function(x) lm(x, data= boston))
+for (n in 1:12) {
+  print(summary(allModelsPoly[[n]]))
+}
+```
