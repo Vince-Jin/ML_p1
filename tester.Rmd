@@ -183,3 +183,216 @@ for (n in 1:12) {
   print(summary(allModelsPoly[[n]]))
 }
 ```
+
+## Clissfication - Question 1, 8, 10, 11
+
+### Question 1
+Using a little bit of algebra, prove that (4.2) is equivalent to (4.3). In other words, the logistic function representation and logit representation for the logistic regression model are equivalent.
+
+***Answer***
+
+Equation 4.2:
+
+$p(X) = \frac{e^{\beta_{0} + \beta_{1} X}}{1 + e^{\beta_{0}+\beta_{1} X}}$
+
+Equation 4.3:
+
+$\frac{p(X)}{1 - p(X)} = e^{\beta_{0}+\beta_{1} X}$
+
+$$\begin{aligned}
+  P(x)=\frac{e^{\beta_0+\beta_1x}}{1+e^{\beta_0+\beta_1x}}\\
+    P(x)(1+^{\beta_0 + \beta_1x}) &= e^{\beta_0 + \beta_1x}\\
+    \frac{P(x)}{\frac{1}{1 + e^{\beta_0 + \beta_1x}}} &= e^{\beta_0 + \beta_1x}\\
+    \frac{P(x)}{1 - \frac{e^{\beta_0 + \beta_1x}}{1+ e^{\beta_0 + \beta_1x}}} &= e^{\beta_0 + \beta_1x}\\
+    \frac{P(x)}{1 - P(x)} &= e^{\beta_0 + \beta_1x}\\
+  \end{aligned} $$
+  
+
+### Question 8
+Suppose that we take a data set, divide it into equally-sized training and test sets, and then try out two different classification procedures. First we use logistic regression and get an error rate of 20% on the training data and 30 % on the test data. Next we use 1-nearest neighbors (i.e. K = 1) and get an average error rate (averaged over both test and training data sets) of 18 %. Based on these results, which method should we prefer to use for classification of new observations? Why?
+
+***Answer***
+
+We should prefer to use logistic regression.
+
+The average error rate over both test and training data sets for 1-nearest neighbors was 18%, which means the error rate in the test dataset will be 36%, since when using only one neighbor, the estimation of any observation from the training dataset will be its response, so that the error rate under 1-nearest neighbor for the training dataset will be 0%. After getting this 0%, we can infer that the error rate for test dataset is $18\% * 2 - 0\% = 36\%$. As 36% was higher than the test set error rate under logistic regression of 30%, we should not use the 1-nearest neighbor method thus prefer the logistic regression method.
+
+
+### Question 10
+This question should be answered using the Weekly data set, which is part of the ISLR package. This data is similar in nature to the Smarket data from this chapter’s lab, except that it contains 
+1,089 weekly returns for 21 years, from the beginning of 1990 to the end of 2010.
+
+(a) Produce some numerical and graphical summaries of the Weekly data. Do there appear to be any patterns?
+
+``` {r C4Q10.a}
+library(ISLR)
+names(Weekly)
+dim(Weekly)
+summary(Weekly)
+cor(Weekly[,1:8])
+pairs(Weekly)
+plot(Weekly$Volume)
+```
+
+***Answer***
+As suggested by cor(Weekly), the correlations between lag variables and today's return were weak. The only strong correlations were between Year and Volume, and the volume tend to increase over time.
+
+
+(b)  Use the full data set to perform a logistic regression with Direction as the response and the five lag variables plus Volume as predictors. Use the summary function to print the results. Do any of the predictors appear to be statistically significant? If so, which ones?
+
+```{r C4Q10.b}
+weekly <- Weekly
+reg4 <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = weekly, family = binomial)
+summary(reg4)
+```
+
+***Answer***
+The only statistically significant predictor was Lag2.
+
+
+(c)  Compute the confusion matrix and overall fraction of correct predictions. Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
+```{r C4Q10.c}
+reg4.probs <- predict(reg4, type = "response")
+reg4.pred <- rep("Down", length(reg4.probs))
+reg4.pred[reg4.probs > 0.5] <- "Up"
+table(reg4.pred, weekly$Direction)
+```
+
+***Answer***
+
+The confusion matrix is able to show the true positives, false positives, true negatives, false negatives thus will be able to tell us the percentage of correct and wrong predictions.
+The overall correction rate was:
+
+$\frac{54 + 557}{54 + 48 + 430 + 557} * 100\% = 56.11\%$
+
+The correction rate among weeks that the market goes up:
+
+$\frac{557}{557 + 48} * 100\% = 92.06\%$
+
+The correction rate among weeks that the market goes down:
+
+$\frac{54}{54 + 430} * 100\% = 11.16\%$
+
+
+(d)  Now fit the logistic regression model using a training data period from 1990 to 2008, with Lag2 as the only predictor. Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010).
+```{r C4Q10.d}
+training <- weekly %>%
+            filter(Year < 2009)
+test <- weekly %>%
+        filter(Year > 2008)
+reg5 <- glm(Direction ~ Lag2, data=training, family=binomial)
+summary(reg5)
+
+reg5.probs = predict(reg5, test, type="response")
+reg5.pred = rep("Down", 104) 
+reg5.pred[reg5.probs > 0.5] = "Up" 
+
+cmatrix <- table(reg5.pred, test$Direction)
+print(cmatrix)
+mean(reg5.pred == test$Direction)
+```
+***Answer***
+The precentage of correct prediction on test set is:
+
+$\frac{9 + 56}{9 + 5 + 34 + 56} * 100\% = 62.5\%$
+
+
+(e) Repeat (d) using LDA.
+```{r C4Q10.d}
+library(MASS)
+reg6 <- lda(Direction ~ Lag2, data = training)
+reg6
+
+reg6.pred <- predict(reg6, test)
+table(reg6.pred$class, test$Direction)
+mean(reg6.pred$class == test$Direction)
+```
+
+***Answer***
+
+The precentage of correct prediction on test set is:
+
+$\frac{9 + 56}{9 + 5 + 34 + 56} * 100\% = 62.5\%$
+
+(f) Repeat (d) using QDA.
+```{r}
+reg7 <-qda(Direction ~ Lag2, data = training)
+reg7
+
+reg7.pred <- predict(reg7,Test)
+table(reg7.pred$class,test$Direc)
+mean(reg7.pred$class == test$Direction)
+```
+
+***Answer***
+
+The precentage of correct prediction on test set is:
+
+$\frac{0 + 61}{0 + 61 + 43 + 61} * 100\% = 58.7\%$
+
+(g) Repeat (d) using KNN with K = 1.
+```{r}
+# Using KNN
+library(class)
+set.seed(1)
+training.x <- as.matrix(Lag2[training])
+test.x <- as.matrix(Lag2[!training])
+training.direct <- Direction[training]
+pred.knn <- knn(training.x, test.x, training.direct, k=1)
+table(pred.knn, Test_Direc)
+```
+*The percentage of correct predictions on the test set is 50% ((21+31)/104), where the test error rate is 50%. For weeks when the market goes up, the model is right 50.82% of the time (31/(30+31)). For weeks when the market goes down, the model is right only 48.84% of the time (21/(21+22)).*
+
+(h) Which of these methods appears to provide the best results on this data?
+
+*Comparing the test error rate across, logistic regression (37.5%) and LDA (37.5%) have lowest error rates, and then QDA (41.35%) and KNN (50%). With that, logistic regression or LDA provide best results on this data.*
+
+(i) Experiment with different combinations of predictors, including possible transformations and interactions, for each of the methods. Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data. Note that you should also experiment with values for K in the KNN classifier.
+
+```{r}
+# Using KNN and K=3
+knn3_pred <- knn(training.x, test.x, training.direct, k=3)
+table(knn3_pred, Test_Direc)
+mean(knn3_pred == Test_Direc)
+```
+
+```{r}
+# Using KNN and K=10
+knn10_pred <- knn(training.x, test.x, training.direct, k=10)
+table(knn10_pred, Test_Direc)
+mean(knn10_pred == Test_Direc)
+```
+
+```{r}
+#Using KNN and k = 100
+knn100_pred <- knn(training.x, test.x, training.direct, k=100)
+table(knn100_pred, Test_Direc)
+mean(knn100_pred == Test_Direc)
+```
+
+```{r}
+# Using logistic regression with lag2 interaction with lag1
+logit.fit2 <- glm(Direction ~ Lag2:Lag1, data=Weekly, family=binomial, subset=training)
+
+logit.probs2 <- predict(logit.fit2, Test, type="response")
+logit.pred2 <- rep("Down", 104) 
+logit.pred2[logit.probs2>0.5] = "Up" 
+table(logit.pred2,Test_Direc)
+```
+   
+
+```{r}
+# Using LDA with all Lag values
+lda.fit2 <- lda(Direction ~ Lag1+Lag2+Lag3+Lag4+Lag5, data=Weekly, subset=training)
+lda.fit2 <- predict(lda.fit2,Test)
+table(lda.fit2$class,Test_Direc)
+```
+
+```{r}
+# Using QDA with Lag2 interaction with lag1
+qda.fit2 <- qda(Direction ~ Lag2:Lag1, data = Weekly, family = binomial, subset = training)
+qda.pred2 <- predict(qda.fit2, Test)$class
+table(qda.pred2, Test_Direc)
+```
+
+**
