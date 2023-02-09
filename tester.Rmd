@@ -3,9 +3,9 @@ title: "Vincent_Jin_SML_Homework_01"
 author: "Vincent Jin"
 date: "2023-02-05"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -44,6 +44,7 @@ This question involves the use of multiple linear regression on the Auto data se
 #install.packages('ISLR')
 library(ISLR)
 library(tidyverse)
+library(dplyr)
 ```
 
 
@@ -298,7 +299,7 @@ $\frac{9 + 56}{9 + 5 + 34 + 56} * 100\% = 62.5\%$
 
 
 (e) Repeat (d) using LDA.
-```{r C4Q10.d}
+```{r C4Q10.e}
 library(MASS)
 reg6 <- lda(Direction ~ Lag2, data = training)
 reg6
@@ -319,7 +320,7 @@ $\frac{9 + 56}{9 + 5 + 34 + 56} * 100\% = 62.5\%$
 reg7 <-qda(Direction ~ Lag2, data = training)
 reg7
 
-reg7.pred <- predict(reg7,Test)
+reg7.pred <- predict(reg7,test)
 table(reg7.pred$class,test$Direc)
 mean(reg7.pred$class == test$Direction)
 ```
@@ -332,67 +333,211 @@ $\frac{0 + 61}{0 + 61 + 43 + 61} * 100\% = 58.7\%$
 
 (g) Repeat (d) using KNN with K = 1.
 ```{r}
-# Using KNN
 library(class)
 set.seed(1)
-training.x <- as.matrix(Lag2[training])
-test.x <- as.matrix(Lag2[!training])
-training.direct <- Direction[training]
-pred.knn <- knn(training.x, test.x, training.direct, k=1)
-table(pred.knn, Test_Direc)
+knn1.training <- as.matrix(training$Lag2)
+knn1.test <- as.matrix(test$Lag2)
+knn1.pred <- knn(knn1.training, knn1.test, training$Direction, k=1)
+table(knn1.pred, test$Direction)
+mean(knn1.pred == test$Direction)
 ```
-*The percentage of correct predictions on the test set is 50% ((21+31)/104), where the test error rate is 50%. For weeks when the market goes up, the model is right 50.82% of the time (31/(30+31)). For weeks when the market goes down, the model is right only 48.84% of the time (21/(21+22)).*
+
+***Answer***
+
+The precentage of correct prediction on test set is:
+
+$\frac{31 + 21}{21 + 31 + 22 + 30} * 100\% = 50.0\%$
 
 (h) Which of these methods appears to provide the best results on this data?
 
-*Comparing the test error rate across, logistic regression (37.5%) and LDA (37.5%) have lowest error rates, and then QDA (41.35%) and KNN (50%). With that, logistic regression or LDA provide best results on this data.*
+***Answer***
+
+Comparing the overall correction rate in test sets, we can see that logistic and linear discriminitive analysis were the two best methods and provided the best results, followed by quadratic discriminative analysis, and the one provided wrost result was KNN-1.
+
 
 (i) Experiment with different combinations of predictors, including possible transformations and interactions, for each of the methods. Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data. Note that you should also experiment with values for K in the KNN classifier.
 
 ```{r}
 # Using KNN and K=3
-knn3_pred <- knn(training.x, test.x, training.direct, k=3)
-table(knn3_pred, Test_Direc)
-mean(knn3_pred == Test_Direc)
+knn3_pred <- knn(knn1.training, knn1.test, training$Direction, k=3)
+table(knn3_pred, test$Direc)
+mean(knn3_pred == test$Direc)
 ```
 
 ```{r}
 # Using KNN and K=10
-knn10_pred <- knn(training.x, test.x, training.direct, k=10)
-table(knn10_pred, Test_Direc)
-mean(knn10_pred == Test_Direc)
+knn10_pred <- knn(knn1.training, knn1.test, training$Direction, k=10)
+table(knn10_pred, test$Direc)
+mean(knn10_pred == test$Direc)
 ```
 
 ```{r}
 #Using KNN and k = 100
-knn100_pred <- knn(training.x, test.x, training.direct, k=100)
-table(knn100_pred, Test_Direc)
-mean(knn100_pred == Test_Direc)
+knn100_pred <- knn(knn1.training, knn1.test, training$Direction, k=100)
+table(knn100_pred, test$Direc)
+mean(knn100_pred == test$Direc)
 ```
 
 ```{r}
 # Using logistic regression with lag2 interaction with lag1
-logit.fit2 <- glm(Direction ~ Lag2:Lag1, data=Weekly, family=binomial, subset=training)
+logit.fit2 <- glm(Direction ~ Lag2:Lag1, data=training, family=binomial)
 
-logit.probs2 <- predict(logit.fit2, Test, type="response")
+logit.probs2 <- predict(logit.fit2, test, type="response")
 logit.pred2 <- rep("Down", 104) 
 logit.pred2[logit.probs2>0.5] = "Up" 
-table(logit.pred2,Test_Direc)
+table(logit.pred2,test$Direc)
 ```
    
 
 ```{r}
 # Using LDA with all Lag values
-lda.fit2 <- lda(Direction ~ Lag1+Lag2+Lag3+Lag4+Lag5, data=Weekly, subset=training)
-lda.fit2 <- predict(lda.fit2,Test)
-table(lda.fit2$class,Test_Direc)
+lda.fit2 <- lda(Direction ~ Lag1+Lag2+Lag3+Lag4+Lag5, data=training)
+lda.fit2 <- predict(lda.fit2,test)
+table(lda.fit2$class,test$Direc)
 ```
 
 ```{r}
 # Using QDA with Lag2 interaction with lag1
-qda.fit2 <- qda(Direction ~ Lag2:Lag1, data = Weekly, family = binomial, subset = training)
-qda.pred2 <- predict(qda.fit2, Test)$class
-table(qda.pred2, Test_Direc)
+qda.fit2 <- qda(Direction ~ Lag2:Lag1, data=training)
+qda.pred2 <- predict(qda.fit2, test)$class
+table(qda.pred2, test$Direc)
 ```
 
-**
+
+### Question 11
+
+(a) Create a binary variable, mpg01, that contains a 1 if mpg contains a value above its median, and a 0 if mpg contains a value below its median. You can compute the median using the median()
+function. Note you may find it helpful to use the data.frame() function to create a single data set containing both mpg01 and the other Auto variables.
+```{r C4Q11.a}
+library(ISLR)
+attach(Auto)
+mpg01 = rep(0, length(mpg))
+mpg01[mpg > median(mpg)] = 1
+Auto <- data.frame(Auto, mpg01)
+
+# library(ISLR)
+# attach(Auto)
+# mpg01 <- rep(0, length(mpg))
+# mpg01[mpg > median(mpg)] <- 1
+# Auto <-data.frame(Auto, mpg01)
+```
+
+(b) Explore the data graphically in order to investigate the association between mpg01 and the other features. Which of the other features seem most likely to be useful in predicting mpg01? Scatterplots and boxplots may be useful tools to answer this question. Describe your findings.
+```{r C4Q11.b}
+summary(Auto [1:8])
+
+pairs(Auto)
+
+varlist <- names(Auto)[2:8]
+
+plot(cylinders~mpg01)
+boxplot(cylinders~mpg01)
+
+plot(displacement~mpg01)
+boxplot(displacement~mpg01)
+
+plot(horsepower~mpg01)
+boxplot(horsepower~mpg01)
+ 
+plot(weight~mpg01)
+boxplot(weight~mpg01)
+
+plot(acceleration~mpg01)
+boxplot(acceleration~mpg01)
+ 
+plot(year~mpg01)
+boxplot(year~mpg01)
+ 
+plot(origin~mpg01)
+boxplot(origin~mpg01)
+```
+
+***Answer*** 
+
+The graphs showed that cylinders, weight, displacement, and horsepower may be associated with mpg01.
+
+(c) Split the data into a training set and a test set
+
+```{r C4Q11.c}
+training1 <- (year%%2 == 0)
+training2 <- Auto[training1,]
+test2 <- Auto[!training1,]
+test.mpg01 <- mpg01[!training1]
+```
+
+(d) Perform LDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{r C4Q12.d}
+lda.auto <- lda(mpg01~cylinders+weight+displacement+horsepower, subset = training1)
+lda.auto
+
+lda.predauto <- predict(lda.auto, test2)
+table(lda.predauto$class, test.mpg01)
+mean(lda.predauto$class != test.mpg01)
+```
+
+***Answer***
+
+The test error of the model was 12.64%.
+
+(e)  Perform QDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{r C4Q12.e}
+qda.auto <- qda(mpg01~cylinders+weight+displacement+horsepower, subset = training1)
+qda.auto
+
+qda.predauto <-predict(qda.auto, test2)
+table(qda.predauto$class, test.mpg01)
+mean(qda.predauto$class != test.mpg01)
+```
+
+***Answer***
+
+The test error of the model was 13.19%.
+
+
+(f) Perform logistic regression on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{r C4Q11.f}
+logit.auto <-glm(mpg01~cylinders+weight+displacement+horsepower, family = binomial, subset = training1)
+summary(logit.auto)
+
+probs3 <- predict(logit.auto, test2, type = "response")
+pred.auto <- rep(0, length(probs3))
+pred.auto[probs3 > 0.5] <- 1
+table(pred.auto, test.mpg01)
+mean(pred.auto != test.mpg01)
+```
+
+***Answer***
+
+The test error of the model was 12.09%.
+
+
+## part g
+```{r C4Q11.g}
+# k=1
+set.seed(1)
+training.x1 <- cbind(cylinders, weight, displacement, horsepower)[training1, ]
+test.x1 <- cbind(cylinders, weight, displacement, horsepower)[!training1, ]
+training.mpg <- mpg01[training1]
+pred.knn1 <- knn(training.x1, test.x1, training.mpg, k=1)
+table(pred.knn1, test.mpg01)
+knn1 = mean(pred.knn1 != test.mpg01)
+
+# k = 3
+pred.knn.3 <- knn(training.x1, test.x1, training.mpg, k=3)
+table(pred.knn.3, test.mpg01)
+knn3 = mean(pred.knn.3 != test.mpg01)
+
+# k = 10
+pred.knn.10 <- knn(training.x1, test.x1, training.mpg, k=10)
+table(pred.knn.10, test.mpg01)
+knn10 = mean(pred.knn.10 != test.mpg01)
+
+# k = 100
+pred.knn.100 <- knn(training.x1, test.x1, training.mpg, k=100)
+table(pred.knn.100, test.mpg01)
+knn100 = mean(pred.knn.100 != test.mpg01)
+
+print(c(knn1, knn3, knn10, knn100))
+```
+***Answer***
+The test error rates for k = 1,3,10,100 were 15.38%, 13.74%, 15.93%, 14.29% respectively. Therefore, k value of 3 seems to perform the best on this data set as it has the lowest test error rate. 

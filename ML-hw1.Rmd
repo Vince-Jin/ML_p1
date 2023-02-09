@@ -1,0 +1,584 @@
+---
+title: "Statistical Machine Learning - Homework 01"
+author: "Vincent Jin"
+date: "2023-02-09"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Homework 01
+
+## Persons I worked with: Jing Wang
+
+## Linear - ISL 5, 6, 9, 15
+
+### Question 5:
+Consider the fitted values that result from performing linear regression without an intercept. In this setting, the ith fitted value takes the form 
+$\hat{y}_{i} = x_{i}\hat{\beta}$, 
+where 
+$$\hat{\beta} = (\sum_{i=1}^{n}x_{i}y_{i}) / (\sum_{i'=1}^{n}x_{i'}^{2})$$. 
+Show that we can write 
+$$\hat{y'} = \sum_{i'=1}^{n}a_{i'} y_{i'}$$
+What is $a_{i'}$?
+
+***Answer:***
+
+$$ a_{i'} = \frac{ x_{i} x_{j} } { \sum_{k=1}^{n} x_{k}^{2} } $$
+
+
+### Question 6:
+Using (3.4), argue that in the case of simple linear regression, the least squares line always passes through the point ($\bar{x}$, $\bar{y}$).
+
+***Answer:***
+
+According to (3.4), $y_{i} = \hat{\beta}_{0} + \hat{\beta}_{1}x_{i}$ and $\beta_{0} = \bar{y} - \hat{\beta}_{1}\bar{x}$. When we substitute $x_{i}$ with $\bar{x}$, we can have:
+$y_{i} = \bar{y} - \beta_{1}\bar{x} +  \beta_{1}\bar{x}$. The last part of the equation canceled each other, so that $\hat{y}_{i}$ will be equal to $\bar{y}$, which means the least squares line will always pass through ($\bar{x}$, $\bar{y}$).
+
+### Question 9:
+This question involves the use of multiple linear regression on the Auto data set.
+(a) Produce a scatter plot matrix which includes all of the variables in the data set.
+``` {r package}
+#install.packages('ISLR')
+library(ISLR)
+library(tidyverse)
+library(dplyr)
+```
+
+
+``` {r C3Q9.a}
+pairs(Auto)
+```
+
+(b) Compute the matrix of correlations between the variables using the function cor(). You will need to exclude the name variable, cor() which is qualitative.
+
+``` {r C3Q9.b}
+x <- Auto
+x %>% select(-(name)) %>%
+  cor()
+```
+
+(c) Use the lm() function to perform a multiple linear regression with mpg as the response and all other variables except name as the predictors. Use the summary() function to print the results.
+Comment on the output. For instance:
+``` {r C3Q9.c}
+x2 <- x %>%
+        select(-(name))
+reg <- lm(mpg ~ ., data = x2)
+summary(reg)
+```
+i. Is there a relationship between the predictors and the response?
+
+***Answer:***
+
+According to the results of from the summary command, we can see that the associated p-value was less than $2.2*10^{-16}$, which was less than 0.05, so that we can reject the null hypothesis        of no relationship between the predictors and the response thus conclude that there was a relationship between the predictors and the response variable.
+
+ii. Which predictors appear to have a statistically significant relationship to the response?
+
+***Answer:***
+
+Based on the regression results, we can see that predictors of: displacement, weight, year, origin were significantly associated with mpg while predictors of: cylinders, horsepower, acceleration were not.
+
+iii. What does the coefficient for the year variable suggest?
+
+***Answer:***
+
+The coefficient for the year variable represents that for every 1 increase in year there is a 0.750773 increase on mpg, adjusting for other variables.
+
+(d) Use the plot() function to produce diagnostic plots of the linear regression fit. Comment on any problems you see with the fit. Do the residual plots suggest any unusually large outliers? Does the leverage plot identify any observations with unusually high leverage?
+
+``` {r C3Q9.d}
+plot(reg)
+```
+
+***Answer***
+
+The residual vs. fitted value plot suggested that there seems to be a pattern which suggests non-linearity in the data. The residual plot also suggested object 323, 326, 327 were three unusal large outliers. The leverage plot also suggested that object 14 had an unusual high leverage.
+
+(e) Use the * and : symbols to fit linear regression models with interaction effects. Do any interactions appear to be statistically significant?
+
+``` {r C3Q9.e}
+reg2 <- lm(mpg ~ cylinders*displacement + displacement*horsepower + displacement*weight, data = x2)
+summary(reg2)
+```
+
+
+***Answer***
+
+Based on the results, the interaction between displacement and horsepower tened to be statistically significant, while the interaction between cylinders and displacement, and displacement and weight were not significant.
+
+(f) Try a few different transformations of the variables, such aslog(X), $\sqrt{x}$, $X^2$. Comment on your findings.
+
+``` {r C3q9.f}
+
+plot(log(Auto$weight), Auto$mpg)
+plot(sqrt(Auto$weight), Auto$mpg)
+plot((Auto$weight)^2, Auto$mpg)
+plot(log(Auto$displacement), Auto$mpg)
+plot(sqrt(Auto$displacement), Auto$mpg)
+plot((Auto$displacement)^2, Auto$mpg)
+plot(log(Auto$horsepower), Auto$mpg)
+plot(sqrt(Auto$horsepower), Auto$mpg)
+plot((Auto$horsepower)^2, Auto$mpg)
+
+```
+
+***Answer***
+
+After trying transformation on several continuous variables (weight, displacement, horsepower), it looks like the log transformation provides most linear looking at the plot.
+
+### Question 15
+This problem involves the Boston data set, which we saw in the lab for this chapter. We will now try to predict per capita crime rate using the other variables in this data set. In other words, per capita crime rate is the response, and the other variables are the predictors.
+
+``` {r C3Q15prep}
+#install.packages('MASS')
+library(MASS)
+library(tidyverse)
+boston <- Boston
+```
+
+(a) For each predictor, fit a simple linear regression model to predict the response. Describe your results. In which of the models is there a statistically significant association between the predictor and the response? Create some plots to back up your assertions.
+``` {r C3Q15.a}
+var_names <- boston %>% names()
+var_names <- var_names[2:14]
+allModelsList <- lapply(paste("crim ~", var_names), as.formula)
+allModelsResults <- lapply(allModelsList, function(x) lm(x, data= boston))
+for (n in 1:13) {
+  print(summary(allModelsResults[[n]]))
+  cat(paste('plots for ', var_names[n], '\n'))
+  plot(allModelsResults[[n]])
+}
+```
+
+***Answer:***
+
+By fitting the models, all predictors were significantly associated with response except for chas variable.
+
+(b) Fit a multiple regression model to predict the response using all of the predictors. Describe your results. For which predictors can we reject the null hypothesis $H_{0} : \beta_{j}$ = 0?
+
+``` {r C3Q15.b}
+func = "crim ~ zn"
+var_names2 = var_names[2:13]
+for (name in var_names2) {
+  func = paste(func, '+ ', name)
+}
+func = as.formula(func)
+reg3 <- lm(func, data = boston)
+summary(reg3)
+```
+***Answer***
+
+Based on the model results, for zn, dis, rad, black, medv we can reject the null hypothesis of $\beta_{j} = 0$
+
+(c) How do your results from (a) compare to your results from (b)? Create a plot displaying the univariate regression coefficients from (a) on the x-axis, and the multiple regression coefficients from (b) on the y-axis. That is, each  single point in the plot. Its coefficient in a simple linear regression model is shown on the x-axis, and its coefficient estimate in the multiple linear regression model is shown on the y-axis.
+
+***Answer Part 1***
+
+As compared to question (a), question (b) suggested that zn, dis, rad, black, medv which were significantly associated with response variable crim in (a) are now not significantly associated with crim in (b).
+
+***Plot***
+
+``` {r C3Q15.c.plot}
+uni <- vector("numeric", 0)
+for (n in 1:13) {
+  uni <- c(uni, allModelsResults[[n]]$coefficient[2])
+}
+mul <- vector("numeric", 0)
+mul <- c(mul, reg3$coefficients)
+mul <- mul[-1]
+plot(uni, mul)
+```
+
+(d) Is there evidence of non-linear association between any of the predictors and the response? To answer this question, for each predictor X, fit a model of the form
+$Y = \beta_{0} + \beta_{1} X + \beta_{2} X^{2} + \beta_{3} X^{3} + \epsilon$
+
+``` {r C3Q15.d}
+var_names3 <- var_names[-3]
+allModelsListPoly <- lapply(paste("crim ~", " ", "poly(", var_names3, ", 3)"), as.formula)
+allModelsPoly <- lapply(allModelsListPoly, function(x) lm(x, data= boston))
+for (n in 1:12) {
+  print(summary(allModelsPoly[[n]]))
+}
+```
+
+***Answer***
+
+Based on the p-values associated with each coefficient, we can see that for predictors of: indus, nox, age, dis, ptratio, and medv, all 3 coefficients (linear, quadratic, cubic) were significant. For predictors of :zn, rm, rad, tax, and lstat, only linear and quadratic terms were significant. For predictor of: black, only linear term coefficient was significant. Therefore, for indus, nox, age, dis, ptratio, medv, zn, rm, rad, tax, and lstat, there were evidences of non-linear relationship, but for black there was no non-linear relationship observed.
+
+
+## Clissfication - Question 1, 8, 10, 11
+
+### Question 1
+Using a little bit of algebra, prove that (4.2) is equivalent to (4.3). In other words, the logistic function representation and logit representation for the logistic regression model are equivalent.
+
+***Answer***
+
+Equation 4.2:
+
+$p(X) = \frac{e^{\beta_{0} + \beta_{1} X}}{1 + e^{\beta_{0}+\beta_{1} X}}$
+
+Equation 4.3:
+
+$\frac{p(X)}{1 - p(X)} = e^{\beta_{0}+\beta_{1} X}$
+
+$$\begin{aligned}
+  P(x)=\frac{e^{\beta_0+\beta_1x}}{1+e^{\beta_0+\beta_1x}}\\
+    P(x)(1+^{\beta_0 + \beta_1x}) &= e^{\beta_0 + \beta_1x}\\
+    \frac{P(x)}{\frac{1}{1 + e^{\beta_0 + \beta_1x}}} &= e^{\beta_0 + \beta_1x}\\
+    \frac{P(x)}{1 - \frac{e^{\beta_0 + \beta_1x}}{1+ e^{\beta_0 + \beta_1x}}} &= e^{\beta_0 + \beta_1x}\\
+    \frac{P(x)}{1 - P(x)} &= e^{\beta_0 + \beta_1x}\\
+  \end{aligned} $$
+  
+
+### Question 8
+Suppose that we take a data set, divide it into equally-sized training and test sets, and then try out two different classification procedures. First we use logistic regression and get an error rate of 20% on the training data and 30 % on the test data. Next we use 1-nearest neighbors (i.e. K = 1) and get an average error rate (averaged over both test and training data sets) of 18 %. Based on these results, which method should we prefer to use for classification of new observations? Why?
+
+***Answer***
+
+We should prefer to use logistic regression.
+
+The average error rate over both test and training data sets for 1-nearest neighbors was 18%, which means the error rate in the test dataset will be 36%, since when using only one neighbor, the estimation of any observation from the training dataset will be its response, so that the error rate under 1-nearest neighbor for the training dataset will be 0%. After getting this 0%, we can infer that the error rate for test dataset is $18\% * 2 - 0\% = 36\%$. As 36% was higher than the test set error rate under logistic regression of 30%, we should not use the 1-nearest neighbor method thus prefer the logistic regression method.
+
+
+### Question 10
+This question should be answered using the Weekly data set, which is part of the ISLR package. This data is similar in nature to the Smarket data from this chapter’s lab, except that it contains 
+1,089 weekly returns for 21 years, from the beginning of 1990 to the end of 2010.
+
+(a) Produce some numerical and graphical summaries of the Weekly data. Do there appear to be any patterns?
+
+``` {r C4Q10.a}
+library(ISLR)
+names(Weekly)
+dim(Weekly)
+summary(Weekly)
+cor(Weekly[,1:8])
+pairs(Weekly)
+plot(Weekly$Volume)
+```
+
+***Answer***
+As suggested by cor(Weekly), the correlations between lag variables and today's return were weak. The only strong correlations were between Year and Volume, and the volume tend to increase over time.
+
+
+(b)  Use the full data set to perform a logistic regression with Direction as the response and the five lag variables plus Volume as predictors. Use the summary function to print the results. Do any of the predictors appear to be statistically significant? If so, which ones?
+
+```{r C4Q10.b}
+weekly <- Weekly
+reg4 <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = weekly, family = binomial)
+summary(reg4)
+```
+
+***Answer***
+The only statistically significant predictor was Lag2.
+
+
+(c)  Compute the confusion matrix and overall fraction of correct predictions. Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression.
+```{r C4Q10.c}
+reg4.probs <- predict(reg4, type = "response")
+reg4.pred <- rep("Down", length(reg4.probs))
+reg4.pred[reg4.probs > 0.5] <- "Up"
+table(reg4.pred, weekly$Direction)
+```
+
+***Answer***
+
+The confusion matrix is able to show the true positives, false positives, true negatives, false negatives thus will be able to tell us the percentage of correct and wrong predictions.
+The overall correction rate was:
+
+$\frac{54 + 557}{54 + 48 + 430 + 557} * 100\% = 56.11\%$
+
+The correction rate among weeks that the market goes up:
+
+$\frac{557}{557 + 48} * 100\% = 92.06\%$
+
+The correction rate among weeks that the market goes down:
+
+$\frac{54}{54 + 430} * 100\% = 11.16\%$
+
+
+(d)  Now fit the logistic regression model using a training data period from 1990 to 2008, with Lag2 as the only predictor. Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010).
+```{r C4Q10.d}
+training <- weekly %>%
+            filter(Year < 2009)
+test <- weekly %>%
+        filter(Year > 2008)
+reg5 <- glm(Direction ~ Lag2, data=training, family=binomial)
+summary(reg5)
+
+reg5.probs = predict(reg5, test, type="response")
+reg5.pred = rep("Down", 104) 
+reg5.pred[reg5.probs > 0.5] = "Up" 
+
+cmatrix <- table(reg5.pred, test$Direction)
+print(cmatrix)
+mean(reg5.pred == test$Direction)
+```
+***Answer***
+The precentage of correct prediction on test set is:
+
+$\frac{9 + 56}{9 + 5 + 34 + 56} * 100\% = 62.5\%$
+
+
+(e) Repeat (d) using LDA.
+```{r C4Q10.e}
+library(MASS)
+reg6 <- lda(Direction ~ Lag2, data = training)
+reg6
+
+reg6.pred <- predict(reg6, test)
+table(reg6.pred$class, test$Direction)
+mean(reg6.pred$class == test$Direction)
+```
+
+***Answer***
+
+The precentage of correct prediction on test set is:
+
+$\frac{9 + 56}{9 + 5 + 34 + 56} * 100\% = 62.5\%$
+
+(f) Repeat (d) using QDA.
+```{r C4Q10.f}
+reg7 <-qda(Direction ~ Lag2, data = training)
+reg7
+
+reg7.pred <- predict(reg7,test)
+table(reg7.pred$class,test$Direc)
+mean(reg7.pred$class == test$Direction)
+```
+
+***Answer***
+
+The precentage of correct prediction on test set is:
+
+$\frac{0 + 61}{0 + 61 + 43 + 61} * 100\% = 58.7\%$
+
+(g) Repeat (d) using KNN with K = 1.
+```{r C4Q10.g}
+library(class)
+set.seed(1)
+knn1.training <- as.matrix(training$Lag2)
+knn1.test <- as.matrix(test$Lag2)
+knn1.pred <- knn(knn1.training, knn1.test, training$Direction, k=1)
+table(knn1.pred, test$Direction)
+mean(knn1.pred == test$Direction)
+```
+
+***Answer***
+
+The precentage of correct prediction on test set is:
+
+$\frac{31 + 21}{21 + 31 + 22 + 30} * 100\% = 50.0\%$
+
+(h) Which of these methods appears to provide the best results on this data?
+
+***Answer***
+
+Comparing the overall correction rate in test sets, we can see that logistic and linear discriminitive analysis were the two best methods and provided the best results, followed by quadratic discriminative analysis, and the one provided wrost result was KNN-1.
+
+
+(i) Experiment with different combinations of predictors, including possible transformations and interactions, for each of the methods. Report the variables, method, and associated confusion matrix that appears to provide the best results on the held out data. Note that you should also experiment with values for K in the KNN classifier.
+
+```{r C4Q10.i}
+# k = 3
+set.seed(1)
+knn3.pred <- knn(knn1.training, knn1.test, training$Direction, k = 3)
+cat(paste('Method: knn with k = 3', 'associated confusion matrix', sep = '\n'))
+table(knn3.pred, test$Direction)
+cat('the test correction rate is: \n')
+mean(knn3.pred == test$Direction)
+
+# k = 10
+set.seed(1)
+knn10.pred <- knn(knn1.training, knn1.test, training$Direction, k = 10)
+cat(paste('Method: knn with k = 10', 'associated confusion matrix', sep = '\n'))
+table(knn10.pred, test$Direction)
+cat('the test correction rate is: \n')
+mean(knn10.pred == test$Direction)
+
+# k = 100
+set.seed(1)
+knn100.pred <- knn(knn1.training, knn1.test, training$Direction, k=100)
+cat(paste('Method: knn with k = 100', 'associated confusion matrix', sep = '\n'))
+table(knn100.pred, test$Direction)
+cat('the test correction rate is: \n')
+mean(knn100.pred == test$Direction)
+
+# LDA, all Lag values
+reg8 <- lda(Direction ~ Lag2:Lag1, data=training)
+reg8.pred <- predict(reg8,test)
+cat(paste('Method: Linear Discriminative Analysis', 'Variables: Lag1, Lag2, interaction term between Lag1 and Lag2', 'associated confusion matrix', sep = '\n'))
+table(reg8.pred$class,test$Direction)
+cat('the test correction rate is: \n')
+mean(reg8.pred$class == test$Direction)
+
+# Logistic, Lag2 Lag1 interaction
+reg9 <- glm(Direction ~ Lag2:Lag1, data=training, family=binomial)
+
+reg9.probs <- predict(reg9, test, type="response")
+reg9.pred <- rep("Down", 104) 
+reg9.pred[reg9.probs > 0.5] = "Up"
+cat(paste('Method: Logistic Regression Analysis', 'Variables: Lag1, Lag2, interaction term between Lag1 and Lag2', 'associated confusion matrix', sep = '\n'))
+table(reg9.pred, test$Direction)
+cat('the test correction rate is: \n')
+mean(reg9.pred == test$Direction)
+
+# QDA, Lag2 lag1 interaction
+reg10 <- qda(Direction ~ Lag2:Lag1, data=training)
+reg10.pred <- predict(reg10, test)$class
+cat(paste('Method: Quadratic Discriminative Analysis', 'Variables: Lag1, Lag2, interaction term between Lag1 and Lag2', 'associated confusion matrix', sep = '\n'))
+table(reg10.pred, test$Direction)
+cat('the test correction rate is: \n')
+mean(reg10.pred == test$Direction)
+```
+
+***Answer***
+
+The results suggested logistic regression methods provided the best results of correction rate on the test (held out) data.
+Information about confusion matrix and correction rate is below:
+``` {r C4Q10.ianswer}
+cat(paste('Method: Linear Discriminative Analysis', 'Variables: Lag1, Lag2, interaction term between Lag1 and Lag2', 'associated confusion matrix', sep = '\n'))
+table(reg8.pred$class,test$Direction)
+cat('the test correction rate is: \n')
+mean(reg8.pred$class == test$Direction)
+```
+
+### Question 11
+
+(a) Create a binary variable, mpg01, that contains a 1 if mpg contains a value above its median, and a 0 if mpg contains a value below its median. You can compute the median using the median()
+function. Note you may find it helpful to use the data.frame() function to create a single data set containing both mpg01 and the other Auto variables.
+```{r C4Q11.a}
+library(ISLR)
+attach(Auto)
+mpg01 = rep(0, length(mpg))
+mpg01[mpg > median(mpg)] = 1
+Auto <- data.frame(Auto, mpg01)
+
+```
+
+(b) Explore the data graphically in order to investigate the association between mpg01 and the other features. Which of the other features seem most likely to be useful in predicting mpg01? Scatterplots and boxplots may be useful tools to answer this question. Describe your findings.
+```{r C4Q11.b}
+summary(Auto [1:8])
+
+pairs(Auto)
+
+varlist <- names(Auto)[2:8]
+
+plot(cylinders~mpg01)
+boxplot(cylinders~mpg01)
+
+plot(displacement~mpg01)
+boxplot(displacement~mpg01)
+
+plot(horsepower~mpg01)
+boxplot(horsepower~mpg01)
+ 
+plot(weight~mpg01)
+boxplot(weight~mpg01)
+
+plot(acceleration~mpg01)
+boxplot(acceleration~mpg01)
+ 
+plot(year~mpg01)
+boxplot(year~mpg01)
+ 
+plot(origin~mpg01)
+boxplot(origin~mpg01)
+```
+
+***Answer*** 
+
+The graphs showed that cylinders, weight, displacement, and horsepower may be associated with mpg01 thus likely to be useful in predicting mpg01.
+
+(c) Split the data into a training set and a test set
+
+```{r C4Q11.c}
+training1 <- (year%%2 == 0)
+training2 <- Auto[training1,]
+test2 <- Auto[!training1,]
+test.mpg01 <- mpg01[!training1]
+```
+
+(d) Perform LDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{r C4Q12.d}
+lda.auto <- lda(mpg01~cylinders+weight+displacement+horsepower, subset = training1)
+lda.auto
+
+lda.predauto <- predict(lda.auto, test2)
+table(lda.predauto$class, test.mpg01)
+mean(lda.predauto$class != test.mpg01)
+```
+
+***Answer***
+
+The test error of the model was 12.64%.
+
+(e)  Perform QDA on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{r C4Q12.e}
+qda.auto <- qda(mpg01~cylinders+weight+displacement+horsepower, subset = training1)
+qda.auto
+
+qda.predauto <-predict(qda.auto, test2)
+table(qda.predauto$class, test.mpg01)
+mean(qda.predauto$class != test.mpg01)
+```
+
+***Answer***
+
+The test error of the model was 13.19%.
+
+
+(f) Perform logistic regression on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in (b). What is the test error of the model obtained?
+```{r C4Q11.f}
+logit.auto <-glm(mpg01~cylinders+weight+displacement+horsepower, family = binomial, subset = training1)
+summary(logit.auto)
+
+probs3 <- predict(logit.auto, test2, type = "response")
+pred.auto <- rep(0, length(probs3))
+pred.auto[probs3 > 0.5] <- 1
+table(pred.auto, test.mpg01)
+mean(pred.auto != test.mpg01)
+```
+
+***Answer***
+
+The test error of the model was 12.09%.
+
+
+(g) Perform KNN on the training data, with several values of K, in order to predict “mpg01” using the variables that seemed most associated with “mpg01” in (b). What test errors do you obtain? Which value of K seems to perform the best on this data set ?
+```{r C4Q11.g}
+# k=1
+set.seed(1)
+training.x1 <- cbind(cylinders, weight, displacement, horsepower)[training1, ]
+test.x1 <- cbind(cylinders, weight, displacement, horsepower)[!training1, ]
+training.mpg <- mpg01[training1]
+pred.knn1 <- knn(training.x1, test.x1, training.mpg, k=1)
+table(pred.knn1, test.mpg01)
+knn1 = mean(pred.knn1 != test.mpg01)
+
+# k = 3
+set.seed(1)
+pred.knn.3 <- knn(training.x1, test.x1, training.mpg, k=3)
+table(pred.knn.3, test.mpg01)
+knn3 = mean(pred.knn.3 != test.mpg01)
+
+# k = 10
+set.seed(1)
+pred.knn.10 <- knn(training.x1, test.x1, training.mpg, k=10)
+table(pred.knn.10, test.mpg01)
+knn10 = mean(pred.knn.10 != test.mpg01)
+
+# k = 100
+set.seed(1)
+pred.knn.100 <- knn(training.x1, test.x1, training.mpg, k=100)
+table(pred.knn.100, test.mpg01)
+knn100 = mean(pred.knn.100 != test.mpg01)
+
+print(c(knn1, knn3, knn10, knn100))
+```
+
+***Answer***
+
+The test error rates for k = 1,3,10,100 were 15.38%, 13.74%, 15.38%, 14.29% respectively. Therefore, k value of 3 seems to perform the best on this data set as it has the lowest test error rate. 
