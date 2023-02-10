@@ -19,16 +19,30 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Question 5:
 Consider the fitted values that result from performing linear regression without an intercept. In this setting, the ith fitted value takes the form 
-$\hat{y}_{i} = x_{i}\hat{\beta}$, 
+$$\hat{y}_{i} = x_{i}\hat{\beta}$$, 
 where 
 $$\hat{\beta} = (\sum_{i=1}^{n}x_{i}y_{i}) / (\sum_{i'=1}^{n}x_{i'}^{2})$$. 
 Show that we can write 
-$$\hat{y'} = \sum_{i'=1}^{n}a_{i'} y_{i'}$$
+$$\hat{y} = \sum_{i'=1}^{n}a_{i'} y_{i'}$$
 What is $a_{i'}$?
 
 ***Answer:***
 
-$$ a_{i'} = \frac{ x_{i} x_{j} } { \sum_{k=1}^{n} x_{k}^{2} } $$
+Since we have $\hat{\beta}$, we can plug in the formula into $\hat{y}$ and get:
+
+$$\hat{y} = x_{i} * (\sum_{i_{1}=1}^{n}x_{i_{1}}y_{i_{1}}) / (\sum_{i_{2}=1}^{n}x_{i_{2}}^{2}) = \sum_{i'=1}^{n}a_{i'} y_{i'}$$
+
+After transformation we can have:
+
+$$\sum_{i_{1}=1}^{n} \frac{\left ( x_{i_{1}} y_{i_{1}} \right ) \times x_{i}}{\sum_{i_{2}=1}^{n} x_{i_{2}}^{2}} = \sum_{i'=1}^{n}a_{i'} y_{i'}$$
+Further transformation:
+
+$$\sum_{i_{1}=1}^{n} \left ( \frac{ x_{i} x_{i_{1}} } { \sum_{i_{2}=1}^{n} x_{i_{2}}^{2} } \times y_{i_{1}} \right ) = \sum_{i'=1}^{n}a_{i'} y_{i'}$$
+
+Therefore, $a_{i'}$ is equal to:
+
+$$\frac{ x_{i} x_{i_{1}} } { \sum_{i_{2}=1}^{n} x_{i_{2}}^{2} }$$
+
 
 
 ### Question 6:
